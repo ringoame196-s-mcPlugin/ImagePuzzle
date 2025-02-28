@@ -21,23 +21,9 @@ import org.bukkit.util.BlockIterator
 import java.awt.image.BufferedImage
 import java.io.File
 import java.util.UUID
-import javax.imageio.ImageIO
 
 class ImgMapManager() {
     private val mapManager = MapManager()
-    private val imgDataBaseManager = ImgDataBaseManager()
-
-    fun loadImg(plugin: Plugin) {
-        val imgDataList = imgDataBaseManager.acquisitionImgDataList()
-
-        for (imgData in imgDataList) {
-            val mapID = imgData.mapID
-            val imgFile = File("${plugin.dataFolder}/img/${imgData.groupID}/${imgData.imgPath}")
-            if (!imgFile.exists()) continue
-            val img = ImageIO.read(imgFile) ?: continue
-            setImg(img, mapID)
-        }
-    }
 
     fun summonItemFrame(location: Location, mapID: Int): ItemFrame? {
         val world = location.world
@@ -121,15 +107,6 @@ class ImgMapManager() {
         mapView.renderers.clear()
         mapView.scale = MapView.Scale.FARTHEST
         return mapView
-    }
-
-    fun delete(itemFrameUUID: String, plugin: Plugin): Boolean {
-        val group = imgDataBaseManager.acquisitionGroup(itemFrameUUID)
-        val imgDataList = imgDataBaseManager.acquisitionGroupItemFrames(group)
-        deleteItemFrame(imgDataList)
-        val deleteGroupData = imgDataBaseManager.deleteGroupData(group, plugin)
-        val deleteImg = deleteImg(group, plugin)
-        return deleteGroupData || deleteImg
     }
 
     fun deleteImg(groupID: String, plugin: Plugin): Boolean {

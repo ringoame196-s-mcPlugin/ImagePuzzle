@@ -28,8 +28,6 @@ configurations["implementation"].extendsFrom(shadowImplementation)
 dependencies {
     shadowImplementation(kotlin("stdlib"))
     compileOnly("org.spigotmc:spigot-api:$pluginVersion-R0.1-SNAPSHOT")
-    val sqliteVersion = "3.46.1.0"
-    implementation("org.xerial:sqlite-jdbc:$sqliteVersion") // SQLLite
 }
 
 configure<BukkitPluginDescription> {
@@ -40,16 +38,16 @@ configure<BukkitPluginDescription> {
     website = "https://github.com/ringoame196-s-mcPlugin"
 
     commands {
-        register("mapimage") {
-            description = "MapImageプラグインのコマンド"
-            aliases = listOf("mimg")
-            permission = "mapImage.make"
-            usage = "/mapimage <make delete> [<画像URL>] [<横幅>]"
+        register("imagepuzzle") {
+            description = "ImagePuzzleプラグインのコマンド"
+            aliases = listOf("imgpuzzle")
+            permission = "imagepuzzle.manager"
+            usage = "/imagepuzzle <make delete> [<画像URL>] [<横幅>]"
         }
     }
 
     permissions {
-        register("mapImage.manager") {
+        register("imagepuzzle.manager") {
             description = "画像生成を貼り付けることができる権限"
             default = BukkitPluginDescription.Permission.Default.OP
         }

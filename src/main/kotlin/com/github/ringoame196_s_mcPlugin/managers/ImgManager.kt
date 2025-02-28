@@ -1,6 +1,5 @@
 package com.github.ringoame196_s_mcPlugin.managers
 
-import com.github.ringoame196_s_mcPlugin.datas.ImgData
 import org.bukkit.plugin.Plugin
 import java.awt.image.BufferedImage
 import java.io.File
@@ -9,7 +8,6 @@ import java.util.UUID
 import javax.imageio.ImageIO
 
 class ImgManager(downloadURL: URL, private val plugin: Plugin) {
-    private val imgDataBaseManager = ImgDataBaseManager()
     private val groupID = UUID.randomUUID().toString()
     private val img: BufferedImage? = try {
         ImageIO.read(downloadURL)
@@ -26,11 +24,6 @@ class ImgManager(downloadURL: URL, private val plugin: Plugin) {
         val path = File(imgGroup, id)
         ImageIO.write(img, "PNG", path)
         return path.toString()
-    }
-
-    fun saveImgInfoDB(mapID: Int, imgPath: String, itemFrameUUID: String) {
-        val imgData = ImgData(mapID, groupID, imgPath, itemFrameUUID)
-        imgDataBaseManager.saveImg(imgData)
     }
 
     fun acquisitionWidth(): Int {
