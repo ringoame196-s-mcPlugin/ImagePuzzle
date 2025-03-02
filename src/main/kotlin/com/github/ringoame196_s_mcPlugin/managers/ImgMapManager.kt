@@ -15,10 +15,8 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.MapMeta
 import org.bukkit.map.MapView
-import org.bukkit.plugin.Plugin
 import org.bukkit.util.BlockIterator
 import java.awt.image.BufferedImage
-import java.io.File
 
 class ImgMapManager() {
     private val mapManager = MapManager()
@@ -40,10 +38,12 @@ class ImgMapManager() {
     }
 
     fun delete(groupID: String) {
-        val itemFrameList = Data.itemFrameGroupData[groupID] ?: return
+        val itemFrameList = Data.groupData[groupID]?.itemFrameList ?: return
         for (itemFrame in itemFrameList) {
+            Data.itemFrameData.remove(itemFrame)
             itemFrame.remove()
         }
+        Data.groupData.remove(groupID)
     }
 
     fun setImg(img: BufferedImage, mapID: Int) {
@@ -107,13 +107,23 @@ class ImgMapManager() {
         return mapView
     }
 
-    fun deleteImg(groupID: String, plugin: Plugin): Boolean {
-        val imgGroupFolder = File("${plugin.dataFolder}/img/$groupID")
-        if (imgGroupFolder.exists()) {
-            val deleteGroupData = imgGroupFolder.deleteRecursively()
-            if (!deleteGroupData) plugin.logger.info("正常に画像削除できませんでした")
-            return deleteGroupData
+    fun deleteALL() {
+        for (groupID in Data.groupData.keys) {
+            delete(groupID)
         }
-        return true
+    }
+
+    fun next(itemFrame: ItemFrame) {
+        val itemFrameData = Data.itemFrameData[itemFrame] ?: return
+        val groupID = itemFrameData.groupID
+        val groupData = Data.groupData[groupID]
+        val itemFrameList = groupData?.itemFrameList ?: return
+        val itemFrameNumber = Data.itemFrameData[itemFrame]?.selectNumber ?: 0
+        val nextNumber = (itemFrameNumber + 1) % itemFrameList.size
+        Data.itemFrameData[itemFrame]?.selectNumber = nextNumber
+
+        val nextMapID = groupData.imgMapID[nextNumber]
+        val mapItem = mapManager.acquisitionMap(nextMapID) ?: return
+        itemFrame.setItem(mapItem)
     }
 }
