@@ -2,7 +2,6 @@ package com.github.ringoame196_s_mcPlugin.managers
 
 import com.github.ringoame196_s_mcPlugin.datas.Data
 import com.github.ringoame196_s_mcPlugin.datas.ImageRenderer
-import com.github.ringoame196_s_mcPlugin.datas.ImgData
 import com.github.ringoame196_s_mcPlugin.directions.Direction
 import com.github.ringoame196_s_mcPlugin.directions.East
 import com.github.ringoame196_s_mcPlugin.directions.North
@@ -20,7 +19,6 @@ import org.bukkit.plugin.Plugin
 import org.bukkit.util.BlockIterator
 import java.awt.image.BufferedImage
 import java.io.File
-import java.util.UUID
 
 class ImgMapManager() {
     private val mapManager = MapManager()
@@ -41,9 +39,9 @@ class ImgMapManager() {
         return itemFrame
     }
 
-    fun deleteItemFrame(imgDataList: List<ImgData>) {
-        for (imgData in imgDataList) {
-            val itemFrame = Bukkit.getEntity(UUID.fromString(imgData.itemFrameUUID)) ?: continue
+    fun delete(groupID: String) {
+        val itemFrameList = Data.itemFrameGroupData[groupID] ?: return
+        for (itemFrame in itemFrameList) {
             itemFrame.remove()
         }
     }

@@ -1,29 +1,17 @@
 package com.github.ringoame196_s_mcPlugin.managers
 
-import org.bukkit.plugin.Plugin
 import java.awt.image.BufferedImage
-import java.io.File
 import java.net.URL
 import java.util.UUID
 import javax.imageio.ImageIO
 
-class ImgManager(downloadURL: URL, private val plugin: Plugin) {
-    private val groupID = UUID.randomUUID().toString()
+class ImgManager(downloadURL: URL) {
+    val groupID = UUID.randomUUID().toString()
     private val img: BufferedImage? = try {
         ImageIO.read(downloadURL)
     } catch (e: Exception) {
         e.printStackTrace()
         null
-    }
-
-    fun saveImg(img: BufferedImage, id: String): String {
-        val imgFolder = File(plugin.dataFolder, "img")
-        if (!imgFolder.exists()) imgFolder.mkdirs()
-        val imgGroup = File("${imgFolder.path}/$groupID")
-        if (!imgGroup.exists()) imgGroup.mkdirs()
-        val path = File(imgGroup, id)
-        ImageIO.write(img, "PNG", path)
-        return path.toString()
     }
 
     fun acquisitionWidth(): Int {
