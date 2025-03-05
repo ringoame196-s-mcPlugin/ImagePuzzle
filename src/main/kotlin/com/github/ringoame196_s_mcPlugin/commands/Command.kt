@@ -17,7 +17,6 @@ import org.bukkit.entity.ItemFrame
 import org.bukkit.entity.Player
 import java.net.MalformedURLException
 import java.net.URL
-import kotlin.random.Random
 
 class Command() : CommandExecutor, TabCompleter {
     private val mapManager = MapManager()
@@ -67,6 +66,7 @@ class Command() : CommandExecutor, TabCompleter {
         val imgMapID = mutableListOf<Int>()
 
         var i = 0
+        var c = 0
         var placeLocation = playerLocation
 
         val size = cutImgList.size
@@ -81,12 +81,12 @@ class Command() : CommandExecutor, TabCompleter {
 
                 imgMapID.add(mapID)
 
-                val randomMapID = (Random.nextInt(0, size) + (firstMapID ?: mapID))
-                val itemFrameData = ItemFrameData(groupID, randomMapID, mapID)
+                val itemFrameData = ItemFrameData(groupID, c)
                 Data.itemFrameData[itemFrame] = itemFrameData
             }
             rightDirection.addition(placeLocation, 1)
             i ++
+            c ++
             if (i == width) {
                 i = 0
                 placeLocation.add(0.0, -1.0, 0.0)
@@ -96,9 +96,7 @@ class Command() : CommandExecutor, TabCompleter {
         }
 
         val groupData = GroupData(
-            itemFrameList,
-            imgMapID.shuffled(), // シャッフル
-            firstMapID ?: 0
+            itemFrameList
         )
         Data.groupData[groupID] = groupData
 
@@ -133,25 +131,19 @@ class Command() : CommandExecutor, TabCompleter {
             sender.sendMessage(message)
             return true
         }
-        val message = if (checkImg(itemFrame)) "${ChatColor.GOLD}クリア" else "${ChatColor.RED}失敗"
-        sender.sendMessage(message)
-        return true
-    }
-
-    private fun checkImg(itemFrame: ItemFrame): Boolean {
         val itemFrameData = Data.itemFrameData[itemFrame]
         val groupID = itemFrameData?.groupID
-        val groupData = Data.groupData[groupID] ?: return false
+        val groupData = Data.groupData[groupID]
 
-        var isMatched = true
-
-        for (itemFrame in Data.groupData[groupID]?.itemFrameList ?: return true) {
-            val itemFrameData = Data.itemFrameData[itemFrame]
-            val selectNumber = itemFrameData?.selectNumber ?: continue
-            val mapID = groupData.imgMapID[selectNumber]
-            if (itemFrameData.mapID != mapID) isMatched = false
+        if (groupData == null) {
+            val message = "${ChatColor.RED}存在しないグループです"
+            sender.sendMessage(message)
+            return true
         }
-        return isMatched
+
+        val message = if (imgMapManager.check(groupData)) "${ChatColor.GOLD}クリア" else "${ChatColor.RED}失敗"
+        sender.sendMessage(message)
+        return true
     }
 
     override fun onTabComplete(commandSender: CommandSender, command: Command, label: String, args: Array<out String>): MutableList<String>? {

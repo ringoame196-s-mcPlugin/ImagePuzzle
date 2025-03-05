@@ -1,6 +1,7 @@
 package com.github.ringoame196_s_mcPlugin.managers
 
 import com.github.ringoame196_s_mcPlugin.datas.Data
+import com.github.ringoame196_s_mcPlugin.datas.GroupData
 import com.github.ringoame196_s_mcPlugin.datas.ImageRenderer
 import com.github.ringoame196_s_mcPlugin.directions.Direction
 import com.github.ringoame196_s_mcPlugin.directions.East
@@ -113,17 +114,30 @@ class ImgMapManager() {
         }
     }
 
-    fun next(itemFrame: ItemFrame) {
-        val itemFrameData = Data.itemFrameData[itemFrame] ?: return
-        val groupID = itemFrameData.groupID
-        val groupData = Data.groupData[groupID]
-        val itemFrameList = groupData?.itemFrameList ?: return
-        val itemFrameNumber = Data.itemFrameData[itemFrame]?.selectNumber ?: 0
-        val nextNumber = (itemFrameNumber + 1) % itemFrameList.size
-        Data.itemFrameData[itemFrame]?.selectNumber = nextNumber
+    fun changeImg(firstFrame: ItemFrame, secondFrame: ItemFrame): Boolean {
+        val firstFrameData = Data.itemFrameData[firstFrame] ?: return false
+        val secondFrameData = Data.itemFrameData[secondFrame] ?: return false
 
-        val nextMapID = groupData.imgMapID[nextNumber]
-        val mapItem = mapManager.acquisitionMap(nextMapID) ?: return
-        itemFrame.setItem(mapItem)
+        val tmpFrameItem = firstFrame.item.clone()
+        val tmpFrameImgNumber = firstFrameData.imgNumber
+
+        firstFrame.setItem(secondFrame.item)
+        firstFrameData.imgNumber = secondFrameData.imgNumber
+
+        secondFrame.setItem(tmpFrameItem)
+        secondFrameData.imgNumber = tmpFrameImgNumber
+
+        return true
+    }
+
+    fun check(groupData: GroupData): Boolean {
+        var i = 0
+
+        for (itemFrame in groupData.itemFrameList) {
+            val itemFrameData = Data.itemFrameData[itemFrame] ?: continue
+            if (itemFrameData.imgNumber != i) return false
+            i ++
+        }
+        return true
     }
 }
