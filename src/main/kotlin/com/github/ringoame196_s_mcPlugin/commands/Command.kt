@@ -84,8 +84,20 @@ class Command() : CommandExecutor, TabCompleter {
     private fun checkCommand(sender: Player): Boolean {
         val itemFrameList = acquisitionItemFrameList(sender) ?: return true
 
-        val message = if (imgMapManager.check(itemFrameList)) "${ChatColor.GOLD}クリア" else "${ChatColor.RED}失敗"
-        sender.sendMessage(message)
+        if (imgMapManager.check(itemFrameList)) {
+            val title = "${ChatColor.GOLD}パズルクリア"
+            val subTitle = "${ChatColor.AQUA}おめでとう！"
+            val sound = Sound.ENTITY_FIREWORK_ROCKET_TWINKLE_FAR
+
+            sender.sendTitle(title, subTitle)
+            sender.playSound(sender, sound, 1f, 1f)
+        } else {
+            val message = "${ChatColor.RED}失敗"
+            val sound = Sound.BLOCK_NOTE_BLOCK_BELL
+
+            sender.sendMessage(message)
+            sender.playSound(sender, sound, 1f, 1f)
+        }
         return true
     }
 
@@ -94,7 +106,10 @@ class Command() : CommandExecutor, TabCompleter {
         imgMapManager.shuffle(itemFrameList)
 
         val message = "${ChatColor.GOLD}シャッフルしました"
+        val sound = Sound.BLOCK_ANVIL_USE
+
         sender.sendMessage(message)
+        sender.playSound(sender, sound, 1f, 1f)
         return true
     }
 

@@ -2,6 +2,8 @@ package com.github.ringoame196_s_mcPlugin.events
 
 import com.github.ringoame196_s_mcPlugin.datas.Data
 import com.github.ringoame196_s_mcPlugin.managers.ImgMapManager
+import net.md_5.bungee.api.ChatMessageType
+import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.ChatColor
 import org.bukkit.Sound
 import org.bukkit.entity.Entity
@@ -11,14 +13,14 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.hanging.HangingBreakEvent
 import org.bukkit.event.player.PlayerInteractEntityEvent
-import org.bukkit.plugin.Plugin
 
-class ItemFrameEvents(private val plugin: Plugin) : Listener {
+class ItemFrameEvents() : Listener {
     private val imgMapManager = ImgMapManager()
 
     @EventHandler
     fun onBreak(e: HangingBreakEvent) {
-        if (isImgItemFrame(e.entity)) e.isCancelled = true
+        if (!isImgItemFrame(e.entity)) return
+        if (Data.itemFrameAllList.contains(e.entity)) e.isCancelled = true
     }
 
     @EventHandler
@@ -29,20 +31,27 @@ class ItemFrameEvents(private val plugin: Plugin) : Listener {
 
         val playerSelectItemFrame = Data.playerSelectItemFrame[player]
 
+        lateinit var message: String
+        lateinit var sound: Sound
+
         if (playerSelectItemFrame == null) {
-            val sound = Sound.UI_BUTTON_CLICK
-            val message = "${ChatColor.GOLD}額縁を選択しました"
-            player.playSound(player, sound, 1f, 1f)
-            player.sendMessage(message)
+            sound = Sound.UI_BUTTON_CLICK
+            message = "${ChatColor.GOLD}額縁を選択しました"
             Data.playerSelectItemFrame[player] = itemFrame
         } else {
-            val sound = Sound.BLOCK_ANVIL_USE
-            val message = "${ChatColor.AQUA}額縁を交換しました"
-            player.playSound(player, sound, 1f, 1f)
-            player.sendMessage(message)
-            imgMapManager.changeImg(playerSelectItemFrame, itemFrame)
+            if (imgMapManager.isSameGroup(playerSelectItemFrame, itemFrame)) {
+                imgMapManager.changeImg(playerSelectItemFrame, itemFrame)
+
+                sound = Sound.BLOCK_ANVIL_USE
+                message = "${ChatColor.AQUA}額縁を交換しました"
+            } else {
+                message = "${ChatColor.RED}同じグループの額縁のみ交換可能です"
+            }
+
             Data.playerSelectItemFrame.remove(player)
         }
+        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, *TextComponent.fromLegacyText(message))
+        player.playSound(player, sound, 1f, 1f)
     }
 
     @EventHandler

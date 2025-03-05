@@ -14,7 +14,7 @@ class Main : JavaPlugin() {
         super.onEnable()
         saveDefaultConfig() // config生成
         Data.max = config.getInt("max")
-        server.pluginManager.registerEvents(ItemFrameEvents(plugin), plugin)
+        server.pluginManager.registerEvents(ItemFrameEvents(), plugin)
         val command = getCommand("imagepuzzle")
         command!!.setExecutor(Command())
     }

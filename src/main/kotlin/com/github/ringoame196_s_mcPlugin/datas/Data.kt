@@ -11,4 +11,6 @@ object Data {
     val itemFrameData = mutableMapOf<ItemFrame, ItemFrameData>()
 
     val playerSelectItemFrame = mutableMapOf<Player, ItemFrame>()
+
+    val itemFrameAllList = mutableListOf<ItemFrame>()
 }

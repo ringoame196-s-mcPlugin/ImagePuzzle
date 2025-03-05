@@ -111,8 +111,8 @@ class ImgMapManager() {
     }
 
     fun deleteALL() {
-        for (groupID in Data.groupItemFrameList.keys) {
-            delete(groupID)
+        for (itemFrame in Data.itemFrameAllList) {
+            itemFrame.remove()
         }
     }
 
@@ -142,10 +142,12 @@ class ImgMapManager() {
 
             val itemFrameData = ItemFrameData(groupID, c)
             Data.itemFrameData[itemFrame] = itemFrameData
+            Data.itemFrameAllList.add(itemFrame)
 
             rightDirection.addition(placeLocation, 1)
             i ++
             c ++
+
             if (i == width) {
                 i = 0
                 placeLocation.add(0.0, -1.0, 0.0)
@@ -193,5 +195,12 @@ class ImgMapManager() {
             val randomItemFrame = itemFrameList[r]
             changeImg(itemFrame, randomItemFrame)
         }
+    }
+
+    fun isSameGroup(firstFrame: ItemFrame, secondFrame: ItemFrame): Boolean {
+        val firstFrameData = Data.itemFrameData[firstFrame] ?: return false
+        val secondFrameData = Data.itemFrameData[secondFrame] ?: return false
+
+        return firstFrameData.groupID == secondFrameData.groupID
     }
 }
