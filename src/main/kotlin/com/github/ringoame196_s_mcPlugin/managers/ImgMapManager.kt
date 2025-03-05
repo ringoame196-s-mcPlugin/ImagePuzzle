@@ -18,6 +18,7 @@ import org.bukkit.inventory.meta.MapMeta
 import org.bukkit.map.MapView
 import org.bukkit.util.BlockIterator
 import java.awt.image.BufferedImage
+import kotlin.random.Random
 
 class ImgMapManager() {
     private val mapManager = MapManager()
@@ -139,5 +140,16 @@ class ImgMapManager() {
             i ++
         }
         return true
+    }
+
+    fun shuffle(groupData: GroupData) {
+        val itemFrameList = groupData.itemFrameList
+        val size = itemFrameList.size
+
+        for (itemFrame in itemFrameList) {
+            val r = Random.nextInt(size - 1)
+            val randomItemFrame = itemFrameList[r]
+            changeImg(itemFrame, randomItemFrame)
+        }
     }
 }

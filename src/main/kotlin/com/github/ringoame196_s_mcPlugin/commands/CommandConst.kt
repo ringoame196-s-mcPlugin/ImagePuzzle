@@ -4,4 +4,5 @@ object CommandConst {
     const val MAKE_COMMAND = "make"
     const val DELETE_COMMAND = "delete"
     const val CHECK_COMMAND = "check"
+    const val SHUFFLE_COMMAND = "shuffle"
 }

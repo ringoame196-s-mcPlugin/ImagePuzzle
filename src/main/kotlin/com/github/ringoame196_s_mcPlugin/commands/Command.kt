@@ -36,6 +36,7 @@ class Command() : CommandExecutor, TabCompleter {
             CommandConst.MAKE_COMMAND -> makeCommand(sender, args)
             CommandConst.DELETE_COMMAND -> deleteCommand(sender)
             CommandConst.CHECK_COMMAND -> check(sender)
+            CommandConst.SHUFFLE_COMMAND -> shuffle(sender)
             else -> {
                 val message = "${ChatColor.RED}コマンド構文が間違っています"
                 sender.sendMessage(message)
@@ -146,9 +147,36 @@ class Command() : CommandExecutor, TabCompleter {
         return true
     }
 
+    private fun shuffle(sender: Player): Boolean {
+        val itemFrame = imgMapManager.acquisitionItemFrame(sender)
+        if (itemFrame == null) {
+            val message = "${ChatColor.RED}額縁の取得に失敗しました"
+            sender.sendMessage(message)
+            return true
+        }
+        val itemFrameData = Data.itemFrameData[itemFrame]
+        val groupID = itemFrameData?.groupID
+        val groupData = Data.groupData[groupID]
+
+        if (groupData == null) {
+            val message = "${ChatColor.RED}存在しないグループです"
+            sender.sendMessage(message)
+            return true
+        }
+
+        imgMapManager.shuffle(groupData)
+
+        val message = "${ChatColor.GOLD}シャッフルしました"
+        sender.sendMessage(message)
+        return true
+    }
+
     override fun onTabComplete(commandSender: CommandSender, command: Command, label: String, args: Array<out String>): MutableList<String>? {
         return when (args.size) {
-            1 -> mutableListOf(CommandConst.MAKE_COMMAND, CommandConst.DELETE_COMMAND, CommandConst.CHECK_COMMAND)
+            1 -> mutableListOf(
+                CommandConst.MAKE_COMMAND, CommandConst.DELETE_COMMAND, CommandConst.CHECK_COMMAND,
+                CommandConst.SHUFFLE_COMMAND
+            )
             2 -> when (args[0]) {
                 CommandConst.MAKE_COMMAND -> mutableListOf("[画像のURL]")
                 else -> mutableListOf()
