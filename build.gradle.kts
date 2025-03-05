@@ -48,7 +48,7 @@ configure<BukkitPluginDescription> {
 
     permissions {
         register("imagepuzzle.manager") {
-            description = "画像生成を貼り付けることができる権限"
+            description = "パズルをすることができるようにする権限"
             default = BukkitPluginDescription.Permission.Default.OP
         }
     }
