@@ -1,13 +1,9 @@
 package com.github.ringoame196_s_mcPlugin.commands
 
 import com.github.ringoame196_s_mcPlugin.datas.Data
-import com.github.ringoame196_s_mcPlugin.datas.GroupData
-import com.github.ringoame196_s_mcPlugin.datas.ItemFrameData
 import com.github.ringoame196_s_mcPlugin.managers.ImgManager
 import com.github.ringoame196_s_mcPlugin.managers.ImgMapManager
-import com.github.ringoame196_s_mcPlugin.managers.MapManager
 import org.bukkit.ChatColor
-import org.bukkit.Material
 import org.bukkit.Sound
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -19,7 +15,6 @@ import java.net.MalformedURLException
 import java.net.URL
 
 class Command() : CommandExecutor, TabCompleter {
-    private val mapManager = MapManager()
     private val imgMapManager = ImgMapManager()
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
@@ -35,8 +30,8 @@ class Command() : CommandExecutor, TabCompleter {
         return when (subCommand) {
             CommandConst.MAKE_COMMAND -> makeCommand(sender, args)
             CommandConst.DELETE_COMMAND -> deleteCommand(sender)
-            CommandConst.CHECK_COMMAND -> check(sender)
-            CommandConst.SHUFFLE_COMMAND -> shuffle(sender)
+            CommandConst.CHECK_COMMAND -> checkCommand(sender)
+            CommandConst.SHUFFLE_COMMAND -> shuffleCommand(sender)
             else -> {
                 val message = "${ChatColor.RED}コマンド構文が間違っています"
                 sender.sendMessage(message)
@@ -47,7 +42,6 @@ class Command() : CommandExecutor, TabCompleter {
 
     private fun makeCommand(sender: Player, args: Array<out String>): Boolean {
         if (args.size < 3) return false
-        val playerLocation = imgMapManager.acquisitionBlockBeforeLookingAt(sender)?.clone() ?: return true
         val url = try { URL(args[1]) } catch (_: MalformedURLException) { return false }
         val width = args[2].toIntOrNull() ?: return false
 
@@ -58,66 +52,28 @@ class Command() : CommandExecutor, TabCompleter {
         }
 
         val imgManager = ImgManager(url)
-
-        val rightDirection = imgMapManager.acquisitionRightDirection(sender)
         val cutImgList = imgManager.splitImage(width)
-
         val groupID = imgManager.groupID
-        val itemFrameList = mutableListOf<ItemFrame>()
-        val imgMapID = mutableListOf<Int>()
-
-        var i = 0
-        var c = 0
-        var placeLocation = playerLocation
-
         val size = cutImgList.size
-        var firstMapID: Int? = null
 
-        for (cutImg in cutImgList) {
-            val mapID = mapManager.issueNewMap()
-            if (placeLocation.block.type == Material.AIR) {
-                val itemFrame = imgMapManager.summonItemFrame(placeLocation, mapID) ?: continue
-                itemFrameList.add(itemFrame)
-                imgMapManager.setImg(cutImg, mapID)
-
-                imgMapID.add(mapID)
-
-                val itemFrameData = ItemFrameData(groupID, c)
-                Data.itemFrameData[itemFrame] = itemFrameData
-            }
-            rightDirection.addition(placeLocation, 1)
-            i ++
-            c ++
-            if (i == width) {
-                i = 0
-                placeLocation.add(0.0, -1.0, 0.0)
-                rightDirection.reset(placeLocation, width)
-            }
-            if (firstMapID == null) firstMapID = mapID
+        if (imgMapManager.make(sender, groupID, cutImgList, width)) {
+            val message = "${ChatColor.GOLD}${size}枚の画像貼り付け完了"
+            val sound = Sound.BLOCK_ANVIL_USE
+            sender.sendMessage(message)
+            sender.playSound(sender, sound, 1f, 1f)
+        } else {
+            val message = "${ChatColor.RED}画像が正常に生成されませんでした"
+            sender.sendMessage(message)
         }
-
-        val groupData = GroupData(
-            itemFrameList
-        )
-        Data.groupData[groupID] = groupData
-
-        val message = "${ChatColor.GOLD}${size}枚の画像貼り付け完了"
-        val sound = Sound.BLOCK_ANVIL_USE
-        sender.sendMessage(message)
-        sender.playSound(sender, sound, 1f, 1f)
 
         return true
     }
 
     private fun deleteCommand(sender: Player): Boolean {
-        val itemFrame = imgMapManager.acquisitionItemFrame(sender)
-        if (itemFrame == null) {
-            val message = "${ChatColor.RED}額縁の取得に失敗しました"
-            sender.sendMessage(message)
-            return true
-        }
-        val groupID = Data.itemFrameData[itemFrame]?.groupID
-        if (groupID != null) imgMapManager.delete(groupID)
+        val itemFrame = acquisitionItemFrame(sender) ?: return true
+        val groupID = Data.itemFrameData[itemFrame]?.groupID ?: return true
+        imgMapManager.delete(groupID)
+
         val message = "${ChatColor.RED}画像削除しました"
         val sound = Sound.BLOCK_ANVIL_USE
         sender.sendMessage(message)
@@ -125,50 +81,44 @@ class Command() : CommandExecutor, TabCompleter {
         return true
     }
 
-    private fun check(sender: Player): Boolean {
-        val itemFrame = imgMapManager.acquisitionItemFrame(sender)
-        if (itemFrame == null) {
-            val message = "${ChatColor.RED}額縁の取得に失敗しました"
-            sender.sendMessage(message)
-            return true
-        }
-        val itemFrameData = Data.itemFrameData[itemFrame]
-        val groupID = itemFrameData?.groupID
-        val groupData = Data.groupData[groupID]
+    private fun checkCommand(sender: Player): Boolean {
+        val itemFrameList = acquisitionItemFrameList(sender) ?: return true
 
-        if (groupData == null) {
-            val message = "${ChatColor.RED}存在しないグループです"
-            sender.sendMessage(message)
-            return true
-        }
-
-        val message = if (imgMapManager.check(groupData)) "${ChatColor.GOLD}クリア" else "${ChatColor.RED}失敗"
+        val message = if (imgMapManager.check(itemFrameList)) "${ChatColor.GOLD}クリア" else "${ChatColor.RED}失敗"
         sender.sendMessage(message)
         return true
     }
 
-    private fun shuffle(sender: Player): Boolean {
-        val itemFrame = imgMapManager.acquisitionItemFrame(sender)
-        if (itemFrame == null) {
-            val message = "${ChatColor.RED}額縁の取得に失敗しました"
-            sender.sendMessage(message)
-            return true
-        }
-        val itemFrameData = Data.itemFrameData[itemFrame]
-        val groupID = itemFrameData?.groupID
-        val groupData = Data.groupData[groupID]
-
-        if (groupData == null) {
-            val message = "${ChatColor.RED}存在しないグループです"
-            sender.sendMessage(message)
-            return true
-        }
-
-        imgMapManager.shuffle(groupData)
+    private fun shuffleCommand(sender: Player): Boolean {
+        val itemFrameList = acquisitionItemFrameList(sender) ?: return true
+        imgMapManager.shuffle(itemFrameList)
 
         val message = "${ChatColor.GOLD}シャッフルしました"
         sender.sendMessage(message)
         return true
+    }
+
+    private fun acquisitionItemFrame(sender: Player): ItemFrame? {
+        val itemFrame = imgMapManager.acquisitionItemFrame(sender)
+        if (itemFrame == null) {
+            val message = "${ChatColor.RED}額縁の取得に失敗しました"
+            sender.sendMessage(message)
+        }
+        return itemFrame
+    }
+
+    private fun acquisitionItemFrameList(sender: Player): MutableList<ItemFrame>? {
+        val itemFrame = acquisitionItemFrame(sender) ?: return null
+        val itemFrameData = Data.itemFrameData[itemFrame]
+        val groupID = itemFrameData?.groupID
+        val itemFrameList = Data.groupItemFrameList[groupID]
+
+        if (itemFrameList == null) {
+            val message = "${ChatColor.RED}グループから額縁の取得が出来ませんでした"
+            sender.sendMessage(message)
+        }
+
+        return itemFrameList
     }
 
     override fun onTabComplete(commandSender: CommandSender, command: Command, label: String, args: Array<out String>): MutableList<String>? {

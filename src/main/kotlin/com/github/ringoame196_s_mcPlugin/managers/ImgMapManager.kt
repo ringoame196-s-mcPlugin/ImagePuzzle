@@ -1,14 +1,15 @@
 package com.github.ringoame196_s_mcPlugin.managers
 
 import com.github.ringoame196_s_mcPlugin.datas.Data
-import com.github.ringoame196_s_mcPlugin.datas.GroupData
 import com.github.ringoame196_s_mcPlugin.datas.ImageRenderer
+import com.github.ringoame196_s_mcPlugin.datas.ItemFrameData
 import com.github.ringoame196_s_mcPlugin.directions.Direction
 import com.github.ringoame196_s_mcPlugin.directions.East
 import com.github.ringoame196_s_mcPlugin.directions.North
 import com.github.ringoame196_s_mcPlugin.directions.South
 import com.github.ringoame196_s_mcPlugin.directions.West
 import org.bukkit.Bukkit
+import org.bukkit.ChatColor
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.ItemFrame
@@ -40,12 +41,12 @@ class ImgMapManager() {
     }
 
     fun delete(groupID: String) {
-        val itemFrameList = Data.groupData[groupID]?.itemFrameList ?: return
+        val itemFrameList = Data.groupItemFrameList[groupID] ?: return
         for (itemFrame in itemFrameList) {
             Data.itemFrameData.remove(itemFrame)
             itemFrame.remove()
         }
-        Data.groupData.remove(groupID)
+        Data.groupItemFrameList.remove(groupID)
     }
 
     fun setImg(img: BufferedImage, mapID: Int) {
@@ -110,9 +111,51 @@ class ImgMapManager() {
     }
 
     fun deleteALL() {
-        for (groupID in Data.groupData.keys) {
+        for (groupID in Data.groupItemFrameList.keys) {
             delete(groupID)
         }
+    }
+
+    fun make(sender: Player, groupID: String, cutImgList: List<BufferedImage>, width: Int): Boolean {
+        val itemFrameList = mutableListOf<ItemFrame>()
+        var i = 0
+        var c = 0
+
+        val playerLocation = acquisitionBlockBeforeLookingAt(sender)?.clone() ?: return false
+        var placeLocation = playerLocation
+
+        val rightDirection = acquisitionRightDirection(sender)
+
+        for (cutImg in cutImgList) {
+            val mapID = mapManager.issueNewMap()
+
+            if (placeLocation.block.type != Material.AIR) {
+                val message = "${ChatColor.RED}画像が正常に生成されませんでした"
+                sender.sendMessage(message)
+                delete(groupID)
+                return false
+            }
+
+            val itemFrame = summonItemFrame(placeLocation, mapID) ?: continue
+            itemFrameList.add(itemFrame)
+            setImg(cutImg, mapID)
+
+            val itemFrameData = ItemFrameData(groupID, c)
+            Data.itemFrameData[itemFrame] = itemFrameData
+
+            rightDirection.addition(placeLocation, 1)
+            i ++
+            c ++
+            if (i == width) {
+                i = 0
+                placeLocation.add(0.0, -1.0, 0.0)
+                rightDirection.reset(placeLocation, width)
+            }
+        }
+
+        Data.groupItemFrameList[groupID] = itemFrameList
+
+        return true
     }
 
     fun changeImg(firstFrame: ItemFrame, secondFrame: ItemFrame): Boolean {
@@ -131,10 +174,10 @@ class ImgMapManager() {
         return true
     }
 
-    fun check(groupData: GroupData): Boolean {
+    fun check(itemFrameList: MutableList<ItemFrame>): Boolean {
         var i = 0
 
-        for (itemFrame in groupData.itemFrameList) {
+        for (itemFrame in itemFrameList) {
             val itemFrameData = Data.itemFrameData[itemFrame] ?: continue
             if (itemFrameData.imgNumber != i) return false
             i ++
@@ -142,8 +185,7 @@ class ImgMapManager() {
         return true
     }
 
-    fun shuffle(groupData: GroupData) {
-        val itemFrameList = groupData.itemFrameList
+    fun shuffle(itemFrameList: MutableList<ItemFrame>) {
         val size = itemFrameList.size
 
         for (itemFrame in itemFrameList) {
